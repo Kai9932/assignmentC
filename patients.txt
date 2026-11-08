@@ -1,2 +1,4 @@
-"P001" "Jack" "broken bone" 12
+"P001" "Jack" "running nose" 13
 "P002" "mary" "fever" 33
+"P003" "Jim" "fever" 34
+"P004" "John" "die" 91
