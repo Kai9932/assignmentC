@@ -4,16 +4,115 @@
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-using namespace std;
+#include <cctype>
 
+using namespace std;
 
 const string FILE_NAME = "patients.txt";
 const string APPOINTMENT_FILE = "appointments.txt";
+const string DOCTOR_FILE = "doctors.txt";
+const string ADMIN_FILE = "admin.txt";
+
+bool isValidName(const string &n) {
+    if (n.empty())
+        return false;
+
+    bool hasLetter = false;
+
+    for (char c : n) {
+        if (isalpha(static_cast<unsigned char>(c))) {
+            hasLetter = true;
+        }
+        else if (c != ' ') {
+            return false;
+        }
+    }
+
+    return hasLetter;
+}
+class Appointment {
+private:
+    string appointmentID;
+    string date;
+    string time;
+    string doctorID;
+    string status;
+
+public:
+    Appointment() {
+        appointmentID = "";
+        date = "";
+        time = "";
+        doctorID = "";
+        status = "Pending";
+    }
+
+    Appointment(string appointmentID, string date, string time,
+                 string doctorID, string status = "Pending") {
+        this->appointmentID = appointmentID;
+        this->date = date;
+        this->time = time;
+        this->doctorID = doctorID;
+        this->status = status;
+    }
+
+    string getAppointmentID() const { return appointmentID; }
+    string getDate() const { return date; }
+    string getTime() const { return time; }
+    string getDoctorID() const { return doctorID; }
+    string getStatus() const { return status; }
+
+    bool setDetails(string date, string time, string doctorID) {
+        if (date.empty() || time.empty() || doctorID.empty())
+            return false;
+
+        this->date = date;
+        this->time = time;
+        this->doctorID = doctorID;
+        return true;
+    }
+
+    void setStatus(string status) {
+        this->status = status;
+    }
+
+    void confirm() {
+        status = "Confirmed";
+    }
+
+    void cancel() {
+        status = "Cancelled";
+    }
+
+    void display(string doctorName = "Unknown Doctor") const {
+        cout << "\n========= APPOINTMENT INFORMATION =========\n";
+        cout << "Appointment ID : " << appointmentID << '\n';
+        cout << "Doctor Name    : " << doctorName << '\n';
+        cout << "Date           : " << date << '\n';
+        cout << "Time           : " << time << '\n';
+        cout << "Status         : " << status << '\n';
+        cout << "============================================\n";
+    }
+};
 
 class Person {
 protected:
     string id;
     string name;
+
+
+    bool isValidName(string n) const {
+        if (n.empty())
+            return false;
+
+        for (char c : n) {
+            if (!isalpha(static_cast<unsigned char>(c)) && c != ' ')
+                return false;
+        }
+
+        return true;
+    }
+
 
 public:
     Person() {
@@ -26,33 +125,42 @@ public:
         this->name = name;
     }
 
+    bool setID(string id) {
+        if (id.empty())
+            return false;
+        this->id = id;
+        return true;
+    }
+
     string getID() const {
         return id;
+    }
+
+    bool setName(string name) {
+        if (!isValidName(name))
+            return false;
+        this->name = name;
+        return true;
     }
 
     string getName() const {
         return name;
     }
 
-    void displayInfo() const {
-        cout << "PatientID      : " << id << endl;
-        cout << "Patient Name   : " << name << endl;
+    virtual void displayInfo() const {
+        cout << "ID             : " << id << '\n';
+        cout << "Name           : " << name << '\n';
     }
 
-    bool setName(string n) {
-        if (n.empty())
-            return false;
-
-        name = n;
-        return true;
-    }
+    virtual ~Person() {}
 };
-
 
 class Patient : public Person {
 private:
     string ailment;
     int age;
+    Appointment appointments[3];
+    int appointmentCount;
     string username;
     string password;
 
@@ -60,6 +168,7 @@ public:
     Patient() : Person() {
         ailment = "";
         age = 0;
+        appointmentCount = 0;
         username = "";
         password = "";
     }
@@ -71,863 +180,141 @@ public:
         this->age = age;
         this->username = username;
         this->password = password;
+        appointmentCount = 0;
     }
 
-    bool setAilment(string a) {
-        if (a.empty())
+    bool setAilment(string ailment) {
+        if (ailment.empty())
             return false;
-
-        ailment = a;
+        this->ailment = ailment;
         return true;
     }
 
-    bool setAge(int a) {
-        if (a <= 0 || a > 100)
+    bool setAge(int age) {
+        if (age <= 0 || age > 100)
             return false;
-
-        age = a;
+        this->age = age;
         return true;
     }
 
-    bool setUsername(string u) {
-        if (u.empty())
-            return false;
+    string getAilment() const { return ailment; }
+    int getAge() const { return age; }
+    string getUsername() const { return username; }
+    string getPassword() const { return password; }
+    int getAppointmentCount() const { return appointmentCount; }
 
-        username = u;
+    bool setUsername(string username) {
+        if (username.empty())
+            return false;
+        this->username = username;
         return true;
     }
 
-    bool setPassword(string p) {
-        if (p.empty())
+    bool setPassword(string password) {
+        if (password.empty())
             return false;
-
-        password = p;
+        this->password = password;
         return true;
     }
 
-    string getAilment() const {
-        return ailment;
+    bool verifyLogin(string username, string password) const {
+        return this->username == username && this->password == password;
     }
 
-    int getAge() const {
-        return age;
+    bool requestAppointment(Appointment appointment) {
+        if (appointmentCount >= 3)
+            return false;
+        appointments[appointmentCount] = appointment;
+        appointmentCount++;
+        return true;
     }
 
-    string getUsername() const {
-        return username;
+    Appointment getAppointment(int index) const {
+        if (index < 0 || index >= appointmentCount)
+            return Appointment();
+        return appointments[index];
     }
 
-    string getPassword() const {
-        return password;
+    bool updateAppointmentStatus(string appointmentID, string newStatus) {
+        for (int i = 0; i < appointmentCount; i++) {
+            if (appointments[i].getAppointmentID() == appointmentID) {
+                appointments[i].setStatus(newStatus);
+                return true;
+            }
+        }
+        return false;
     }
 
-    bool verifyLogin(string u, string p) const {
-        return username == u && password == p;
+    bool removeAppointment(string appointmentID) {
+        for (int i = 0; i < appointmentCount; i++) {
+            if (appointments[i].getAppointmentID() == appointmentID) {
+                for (int j = i; j < appointmentCount - 1; j++)
+                    appointments[j] = appointments[j + 1];
+                appointmentCount--;
+                return true;
+            }
+        }
+        return false;
     }
 
-    void displayInfo() const {
+    void displayAppointments() const {
+        if (appointmentCount == 0) {
+            cout << "\nNo appointments found!\n";
+            return;
+        }
+
+        for (int i = 0; i < appointmentCount; i++)
+            appointments[i].display();
+    }
+
+    void displayInfo() const override {
         cout << "\n========= PATIENT INFORMATION =========\n";
         Person::displayInfo();
-        cout << "Patient Ailment: " << ailment << endl;
-        cout << "Patient Age    : " << age << endl;
+        cout << "Patient Ailment: " << ailment << '\n';
+        cout << "Patient Age    : " << age << '\n';
         cout << "=======================================\n";
     }
 };
 
-
 class Doctor : public Person {
 private:
-    string department;
+    string specialty;
+    int roomNumber;
     string username;
     string password;
 
 public:
     Doctor() : Person() {
-        department = "";
+        specialty = "";
+        roomNumber = 0;
         username = "";
         password = "";
     }
 
-    Doctor(string id, string name, string department,
-           string username, string password)
+    Doctor(string id, string name, string specialty, int roomNumber,
+           string username = "", string password = "")
         : Person(id, name) {
-
-        this->department = department;
+        this->specialty = specialty;
+        this->roomNumber = roomNumber;
         this->username = username;
         this->password = password;
     }
 
-    string getDepartment() const {
-        return department;
+    string getSpecialty() const { return specialty; }
+    int getRoomNumber() const { return roomNumber; }
+    string getUsername() const { return username; }
+
+    bool verifyLogin(string username, string password) const {
+        return this->username == username && this->password == password;
     }
 
-    string getUsername() const {
-        return username;
-    }
-
-    bool verifyLogin(string u, string p) const {
-        return username == u && password == p;
-    }
-
-    void displayInfo() const {
+    void displayInfo() const override {
         cout << "\n========= DOCTOR INFORMATION =========\n";
-        cout << "Doctor ID    : " << id << endl;
-        cout << "Doctor Name  : " << name << endl;
-        cout << "Department   : " << department << endl;
+        cout << "Doctor ID    : " << id << '\n';
+        cout << "Doctor Name  : " << name << '\n';
+        cout << "Specialty    : " << specialty << '\n';
+        cout << "Room Number  : " << roomNumber << '\n';
         cout << "======================================\n";
-    }
-};
-
-
-class Appointment {
-private:
-    string appointmentID;
-    string patientID;
-    string doctorID;
-    string date;
-    string time;
-    string status;
-
-public:
-    Appointment() {
-        appointmentID = "";
-        patientID = "";
-        doctorID = "";
-        date = "";
-        time = "";
-        status = "Pending";
-    }
-
-    Appointment(string appointmentID, string patientID,
-                string doctorID, string date,
-                string time, string status = "Pending") {
-
-        this->appointmentID = appointmentID;
-        this->patientID = patientID;
-        this->doctorID = doctorID;
-        this->date = date;
-        this->time = time;
-        this->status = status;
-    }
-
-    string getAppointmentID() const {
-        return appointmentID;
-    }
-
-    string getPatientID() const {
-        return patientID;
-    }
-
-    string getDoctorID() const {
-        return doctorID;
-    }
-
-    string getDate() const {
-        return date;
-    }
-
-    string getTime() const {
-        return time;
-    }
-
-    string getStatus() const {
-        return status;
-    }
-
-    void setStatus(string s) {
-        status = s;
-    }
-
-    void displayInfo(string doctorName) const {
-        cout << "\n========= APPOINTMENT INFORMATION =========\n";
-        cout << "Appointment ID : " << appointmentID << endl;
-        cout << "Patient ID     : " << patientID << endl;
-        cout << "Doctor Name    : " << doctorName << endl;
-        cout << "Date           : " << date << endl;
-        cout << "Time           : " << time << endl;
-        cout << "Status         : " << status << endl;
-        cout << "============================================\n";
-    }
-};
-
-
-void displayDoctors() {
-
-    ifstream file("doctors.txt");
-
-    if (!file.is_open()) {
-        cout << "Error: Cannot open doctors.txt!\n";
-        return;
-    }
-
-    string doctorID, doctorName, department;
-
-    cout << "\n============== AVAILABLE DOCTORS ==============\n";
-
-    while (file >> quoted(doctorID)
-                >> quoted(doctorName)
-                >> quoted(department)) {
-
-        cout << "\nDoctor ID   : " << doctorID << endl;
-        cout << "Doctor Name : " << doctorName << endl;
-        cout << "Department  : " << department << endl;
-    }
-
-    cout << "================================================\n";
-
-    file.close();
-}
-
-bool doctorExists(string searchID) {
-
-    ifstream file("doctors.txt");
-
-    if (!file.is_open())
-        return false;
-
-    string doctorID, doctorName, department;
-
-    while (file >> quoted(doctorID)
-                >> quoted(doctorName)
-                >> quoted(department)) {
-
-        if (doctorID == searchID) {
-            file.close();
-            return true;
-        }
-    }
-
-    file.close();
-    return false;
-}
-
-string getDoctorName(string searchID) {
-
-    ifstream file("doctors.txt");
-
-    if (!file.is_open())
-        return "Unknown Doctor";
-
-    string doctorID, doctorName, department;
-
-    while (file >> quoted(doctorID)
-                >> quoted(doctorName)
-                >> quoted(department)) {
-
-        if (doctorID == searchID) {
-            file.close();
-            return doctorName;
-        }
-    }
-
-    file.close();
-    return "Unknown Doctor";
-}
-
-
-class AppointmentRecords {
-private:
-    Appointment appointments[100];
-    int appointmentCount;
-
-    void loadAppointments() {
-        ifstream file(APPOINTMENT_FILE);
-
-        if (!file.is_open()) {
-            return;
-        }
-
-        string line;
-        string appointmentID, patientID, doctorID;
-        string date, time, status;
-
-        while (appointmentCount < 100 && getline(file, line)) {
-
-            istringstream record(line);
-
-            if (record >> quoted(appointmentID)
-                       >> quoted(patientID)
-                       >> quoted(doctorID)
-                       >> quoted(date)
-                       >> quoted(time)
-                       >> quoted(status)) {
-
-                Appointment appointment(
-                    appointmentID,
-                    patientID,
-                    doctorID,
-                    date,
-                    time,
-                    status
-                );
-
-                appointments[appointmentCount] = appointment;
-                appointmentCount++;
-            }
-        }
-
-        file.close();
-    }
-
-    bool saveAppointments() {
-        ofstream file(APPOINTMENT_FILE);
-
-        if (!file.is_open()) {
-            cout << "Error: Cannot save appointment records!\n";
-            return false;
-        }
-
-        for (int i = 0; i < appointmentCount; i++) {
-            file << quoted(appointments[i].getAppointmentID()) << " "
-                 << quoted(appointments[i].getPatientID()) << " "
-                 << quoted(appointments[i].getDoctorID()) << " "
-                 << quoted(appointments[i].getDate()) << " "
-                 << quoted(appointments[i].getTime()) << " "
-                 << quoted(appointments[i].getStatus()) << endl;
-        }
-
-        file.close();
-
-        return !file.fail();
-    }
-
-    int findIndex(string appointmentID) const {
-        for (int i = 0; i < appointmentCount; i++) {
-            if (appointments[i].getAppointmentID() == appointmentID) {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-public:
-    AppointmentRecords() {
-        appointmentCount = 0;
-        loadAppointments();
-    }
-
-    string generateAppointmentID() const {
-        int highestNumber = 0;
-
-        for (int i = 0; i < appointmentCount; i++) {
-            string id = appointments[i].getAppointmentID();
-
-            if (id.length() > 2 && id.substr(0, 2) == "AP") {
-                try {
-                    int number = stoi(id.substr(2));
-
-                    if (number > highestNumber) {
-                        highestNumber = number;
-                    }
-                }
-                catch (...) {
-                }
-            }
-        }
-
-        int number = highestNumber + 1;
-        string id = "AP";
-
-        if (number < 100)
-            id += "0";
-
-        if (number < 10)
-            id += "0";
-
-        id += to_string(number);
-
-        return id;
-    }
-
-    bool addAppointment(Appointment appointment) {
-        if (appointmentCount >= 100) {
-            cout << "Appointment storage is full!\n";
-            return false;
-        }
-
-        if (findIndex(appointment.getAppointmentID()) != -1) {
-            cout << "Appointment ID already exists!\n";
-            return false;
-        }
-
-        appointments[appointmentCount] = appointment;
-        appointmentCount++;
-
-        if (!saveAppointments()) {
-            appointmentCount--;
-            return false;
-        }
-
-        return true;
-    }
-
-    bool isSlotAvailable(string doctorID, string date, string time) const {
-
-        for (int i = 0; i < appointmentCount; i++) {
-
-            if (appointments[i].getDoctorID() == doctorID &&
-                appointments[i].getDate() == date &&
-                appointments[i].getTime() == time &&
-                appointments[i].getStatus() != "Cancelled") {
-
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-
-    void displayPatientAppointments(string patientID) const {
-
-        bool found = false;
-
-        for (int i = 0; i < appointmentCount; i++) {
-
-            if (appointments[i].getPatientID() == patientID) {
-
-                appointments[i].displayInfo(
-                    getDoctorName(appointments[i].getDoctorID())
-                );
-
-                found = true;
-            }
-        }
-
-        if (!found) {
-            cout << "\nNo appointments found!\n";
-        }
-    }
-
-    
-    void displayDoctorAppointments(string doctorID, string doctorName) const {
-
-        bool found = false;
-
-        cout << "\n========= MY APPOINTMENTS =========\n";
-
-        for (int i = 0; i < appointmentCount; i++) {
-
-            if (appointments[i].getDoctorID() == doctorID) {
-
-                appointments[i].displayInfo(doctorName);
-                found = true;
-            }
-        }
-
-        if (!found) {
-            cout << "\nNo appointments assigned to you.\n";
-        }
-    }
-
-
-    bool updateAppointmentStatus(string appointmentID,
-                                string doctorID,
-                                string newStatus) {
-
-        int index = findIndex(appointmentID);
-
-        if (index == -1)
-            return false;
-
-        if (appointments[index].getDoctorID() != doctorID)
-            return false;
-
-        if (appointments[index].getStatus() != "Pending")
-            return false;
-
-        if (newStatus != "Confirmed" && newStatus != "Rejected")
-            return false;
-
-        string oldStatus = appointments[index].getStatus();
-
-        appointments[index].setStatus(newStatus);
-
-        if (!saveAppointments()) {
-            appointments[index].setStatus(oldStatus);
-            return false;
-        }
-
-        return true;
-    }
-
-
-
-    bool cancelAppointment(string appointmentID, string patientID) {
-        int index = findIndex(appointmentID);
-
-        if (index == -1)
-            return false;
-
-        if (appointments[index].getPatientID() != patientID)
-            return false;
-
-        if (appointments[index].getStatus() == "Cancelled")
-            return false;
-
-        appointments[index].setStatus("Cancelled");
-
-        if (!saveAppointments()) {
-            appointments[index].setStatus("Pending");
-            return false;
-        }
-
-        return true;
-    }
-
-};
-
-
-void bookAppointment(Patient &patient, AppointmentRecords &records) {
-
-    string doctorID, date, time;
-    string confirmation;
-
-    cout << "\n========================================\n";
-    cout << "       XIAMEN MEDICAL CENTER\n";
-    cout << "          BOOK APPOINTMENT\n";
-    cout << "========================================\n";
-
-    displayDoctors();
-
-    cout << "\nEnter Doctor ID: ";
-    getline(cin, doctorID);
-
-    if (!doctorExists(doctorID)) {
-        cout << "\nInvalid Doctor ID!\n";
-        return;
-    }
-
-    cout << "Enter Appointment Date (YYYY-MM-DD): ";
-    getline(cin, date);
-
-    if (date.empty()) {
-        cout << "\nAppointment date cannot be empty!\n";
-        return;
-    }
-
-    cout << "Enter Appointment Time (HH:MM): ";
-    getline(cin, time);
-
-    if (time.empty()) {
-        cout << "\nAppointment time cannot be empty!\n";
-        return;
-    }
-
-    if (!records.isSlotAvailable(doctorID, date, time)) {
-        cout << "\nSorry! This doctor is already booked at that time.\n";
-        return;
-    }
-
-    cout << "\n========== BOOKING SUMMARY ==========\n";
-    cout << "Patient Name : " << patient.getName() << endl;
-    cout << "Patient ID   : " << patient.getID() << endl;
-    cout << "Doctor Name  : " << getDoctorName(doctorID) << endl;
-    cout << "Date         : " << date << endl;
-    cout << "Time         : " << time << endl;
-    cout << "=====================================\n";
-
-    cout << "\nConfirm appointment? (Y/N): ";
-    getline(cin, confirmation);
-
-    if (confirmation != "Y" && confirmation != "y") {
-        cout << "\nBooking cancelled!\n";
-        return;
-    }
-
-    string appointmentID = records.generateAppointmentID();
-
-    Appointment newAppointment(
-        appointmentID,
-        patient.getID(),
-        doctorID,
-        date,
-        time,
-        "Pending"
-    );
-
-    if (records.addAppointment(newAppointment)) {
-
-        cout << "\n========================================\n";
-        cout << "       APPOINTMENT BOOKED!\n";
-        cout << "========================================\n";
-
-        cout << "Appointment ID : " << appointmentID << endl;
-        cout << "Doctor Name    : " << getDoctorName(doctorID) << endl;
-        cout << "Date           : " << date << endl;
-        cout << "Time           : " << time << endl;
-        cout << "Status         : Pending\n";
-
-    }
-    else {
-        cout << "\nFailed to book appointment!\n";
-    }
-}
-
-
-class ClinicRecords {
-
-private:
-    Patient patients[10];
-    int patientCount;
-
-
-    void loadPatients() {
-        ifstream file(FILE_NAME);
-
-        if (!file.is_open()) {
-            return;
-        }
-
-        string line;
-        string id, name, ailment, username, password;
-        int age;
-
-        while (patientCount < 10 && getline(file, line)) {
-
-            istringstream record(line);
-
-            username = "";
-            password = "";
-
-            if (record >> quoted(id)
-                    >> quoted(name)
-                    >> quoted(ailment)
-                    >> age) {
-
-                record >> quoted(username) >> quoted(password);
-
-                Patient p(id, name, ailment, age, username, password);
-
-                patients[patientCount] = p;
-                patientCount++;
-            }
-        }
-
-        file.close();
-    }
-
-
-
-    bool savePatients() {
-        ofstream file(FILE_NAME);
-
-        if (!file.is_open()) {
-            cout << "Error: Cannot save patient records!\n";
-            return false;
-        }
-
-        for (int i = 0; i < patientCount; i++) {
-            file << quoted(patients[i].getID()) << " "
-                << quoted(patients[i].getName()) << " "
-                << quoted(patients[i].getAilment()) << " "
-                << patients[i].getAge() << " "
-                << quoted(patients[i].getUsername()) << " "
-                << quoted(patients[i].getPassword()) << endl;
-        }
-
-        file.close();
-
-        return !file.fail();
-    }
-
-
-public:
-    ClinicRecords() {
-        patientCount = 0;
-        loadPatients();
-    }
-
-    string generatePatientID() {
-        int number = patientCount + 1;
-        string id = "P";
-
-        if (number < 100)
-            id += "0";
-
-        if (number < 10)
-            id += "0";
-
-        id += to_string(number);
-        return id;
-    }
-
-    int findIndex(string id) {
-        for (int i = 0; i < patientCount; i++) {
-            if (patients[i].getID() == id) {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-    bool verifyPatient(string id, string name) {
-    int index = findIndex(id);
-
-    if (index == -1)
-        return false;
-
-    return patients[index].getName() == name;
-    }
-
-    bool idExists(string id) {
-        return findIndex(id) != -1;
-    }
-
-
-    bool usernameExists(string username) {
-        for (int i = 0; i < patientCount; i++) {
-            if (!username.empty() &&
-                patients[i].getUsername() == username) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-
-    bool patientLogin(string username, string password, Patient &loggedInPatient) {
-
-        for (int i = 0; i < patientCount; i++) {
-
-            if (patients[i].verifyLogin(username, password)) {
-                loggedInPatient = patients[i];
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-
-
-    bool addPatient(Patient p) {
-        if (patientCount >= 10)
-            return false;
-
-        if (idExists(p.getID()))
-            return false;
-
-        ofstream file(FILE_NAME, ios::app);
-
-        if (!file.is_open()) {
-            cout << "Error: Cannot open patients.txt!\n";
-            return false;
-        }
-
-        file << quoted(p.getID()) << " "
-            << quoted(p.getName()) << " "
-            << quoted(p.getAilment()) << " "
-            << p.getAge() << " "
-            << quoted(p.getUsername()) << " "
-            << quoted(p.getPassword()) << endl;
-
-        if (!file.good()) {
-            file.close();
-            cout << "Error saving patient information!\n";
-            return false;
-        }
-
-        file.close();
-
-        patients[patientCount] = p;
-        patientCount++;
-
-        return true;
-    }
-
-    bool updatePatient(string id, string name, string ailment, int age, int choice) {
-        int index = findIndex(id);
-
-        if (index == -1)
-            return false;
-
-        if (patients[index].getName() != name)
-            return false;
-
-        Patient oldPatient = patients[index];
-
-        if (choice == 1) {
-            if (ailment.empty())
-                return false;
-
-            patients[index].setAilment(ailment);
-        }
-        else if (choice == 2) {
-            if (age <= 0 || age > 100)
-                return false;
-
-            patients[index].setAge(age);
-        }
-        else {
-            return false;
-        }
-
-        if (!savePatients()) {
-            patients[index] = oldPatient;
-            return false;
-        }
-
-        return true;
-    }
-
-    bool deletePatient(string id) {
-        int index = findIndex(id);
-
-        if (index == -1)
-            return false;
-
-        Patient backup[10];
-        int oldCount = patientCount;
-
-        for (int i = 0; i < patientCount; i++) {
-            backup[i] = patients[i];
-        }
-
-        for (int i = index; i < patientCount - 1; i++) {
-            patients[i] = patients[i + 1];
-        }
-
-        patientCount--;
-
-        if (!savePatients()) {
-            patientCount = oldCount;
-
-            for (int i = 0; i < oldCount; i++) {
-                patients[i] = backup[i];
-            }
-
-            return false;
-        }
-
-        return true;
-    }
-
-    void displayAll() {
-        if (patientCount == 0) {
-            cout << "\nNo patient records found!\n";
-            return;
-        }
-
-        for (int i = 0; i < patientCount; i++) {
-            patients[i].displayInfo();
-        }
-
-        cout << "\nTotal Patients: "
-             << patientCount << endl;
-    }
-
-    void displayPatient(string id) {
-        int index = findIndex(id);
-
-        if (index == -1) {
-            cout << "\nPatient not found!\n";
-            return;
-        }
-
-        patients[index].displayInfo();
     }
 };
 
@@ -948,24 +335,520 @@ public:
         this->accessLevel = accessLevel;
     }
 
-    int getAccessLevel() const {
-        return accessLevel;
-    }
+    int getAccessLevel() const { return accessLevel; }
 
-    void displayInfo() const {
+    void displayInfo() const override {
         cout << "\n========= ADMIN INFORMATION =========\n";
-        cout << "Admin ID       : " << id << endl;
-        cout << "Admin Name     : " << name << endl;
-        cout << "Department     : " << department << endl;
-        cout << "Access Level   : " << accessLevel << endl;
+        cout << "Admin ID       : " << id << '\n';
+        cout << "Admin Name     : " << name << '\n';
+        cout << "Department     : " << department << '\n';
+        cout << "Access Level   : " << accessLevel << '\n';
         cout << "=====================================\n";
     }
 };
 
-bool adminLogin(Admin &loggedInAdmin) {
+string getDoctorName(string searchID);
 
-    string username, password;
-    string savedUsername, savedPassword;
+class ClinicRecords {
+private:
+    Patient patients[10];
+    int patientCount;
+
+    void loadPatients() {
+        ifstream file(FILE_NAME);
+        if (!file.is_open())
+            return;
+
+        string line, id, name, ailment, username, password;
+        int age;
+
+        while (patientCount < 10 && getline(file, line)) {
+            istringstream record(line);
+            username = "";
+            password = "";
+
+            if (record >> quoted(id) >> quoted(name) >> quoted(ailment) >> age && isValidName(name)) {
+                record >> quoted(username) >> quoted(password);
+                patients[patientCount] =
+                    Patient(id, name, ailment, age, username, password);
+                patientCount++;
+            }
+        }
+    }
+
+    bool savePatients() const {
+        ofstream file(FILE_NAME);
+        if (!file.is_open())
+            return false;
+
+        for (int i = 0; i < patientCount; i++) {
+            file << quoted(patients[i].getID()) << ' '
+                 << quoted(patients[i].getName()) << ' '
+                 << quoted(patients[i].getAilment()) << ' '
+                 << patients[i].getAge() << ' '
+                 << quoted(patients[i].getUsername()) << ' '
+                 << quoted(patients[i].getPassword()) << '\n';
+        }
+        return file.good();
+    }
+
+    void loadAppointments() {
+        ifstream file(APPOINTMENT_FILE);
+        if (!file.is_open())
+            return;
+
+        string line, appointmentID, patientID, doctorID, date, time, status;
+
+        while (getline(file, line)) {
+            istringstream record(line);
+
+            if (record >> quoted(appointmentID) >> quoted(patientID)
+                       >> quoted(doctorID) >> quoted(date)
+                       >> quoted(time) >> quoted(status)) {
+                int index = findIndex(patientID);
+                if (index != -1) {
+                    Appointment a(appointmentID, date, time, doctorID, status);
+                    patients[index].requestAppointment(a);
+                }
+            }
+        }
+    }
+
+    bool saveAppointments() const {
+        ofstream file(APPOINTMENT_FILE);
+        if (!file.is_open())
+            return false;
+
+        for (int i = 0; i < patientCount; i++) {
+            for (int j = 0; j < patients[i].getAppointmentCount(); j++) {
+                Appointment a = patients[i].getAppointment(j);
+                file << quoted(a.getAppointmentID()) << ' '
+                     << quoted(patients[i].getID()) << ' '
+                     << quoted(a.getDoctorID()) << ' '
+                     << quoted(a.getDate()) << ' '
+                     << quoted(a.getTime()) << ' '
+                     << quoted(a.getStatus()) << '\n';
+            }
+        }
+        return file.good();
+    }
+
+public:
+    ClinicRecords() {
+        patientCount = 0;
+        loadPatients();
+        loadAppointments();
+    }
+
+    int findIndex(string id) const {
+        for (int i = 0; i < patientCount; i++)
+            if (patients[i].getID() == id)
+                return i;
+        return -1;
+    }
+
+    bool idExists(string id) const {
+        return findIndex(id) != -1;
+    }
+
+    bool verifyPatient(string id, string name) const {
+        int index = findIndex(id);
+        return index != -1 && patients[index].getName() == name;
+    }
+
+    bool usernameExists(string username) const {
+        for (int i = 0; i < patientCount; i++)
+            if (!username.empty() && patients[i].getUsername() == username)
+                return true;
+        return false;
+    }
+
+    bool patientLogin(string username, string password,
+                      Patient &loggedInPatient) const {
+        for (int i = 0; i < patientCount; i++) {
+            if (patients[i].verifyLogin(username, password)) {
+                loggedInPatient = patients[i];
+                return true;
+            }
+        }
+        return false;
+    }
+
+    string generatePatientID() const {
+        int highest = 0;
+        for (int i = 0; i < patientCount; i++) {
+            string current = patients[i].getID();
+            if (current.size() > 1 && current[0] == 'P') {
+                try {
+                    int number = stoi(current.substr(1));
+                    if (number > highest)
+                        highest = number;
+                } catch (...) {}
+            }
+        }
+
+        int number = highest + 1;
+        ostringstream result;
+        result << 'P' << setw(3) << setfill('0') << number;
+        return result.str();
+    }
+
+    string generateAppointmentID() const {
+        int highest = 0;
+        for (int i = 0; i < patientCount; i++) {
+            for (int j = 0; j < patients[i].getAppointmentCount(); j++) {
+                string current = patients[i].getAppointment(j).getAppointmentID();
+                if (current.size() > 2 && current.substr(0, 2) == "AP") {
+                    try {
+                        int number = stoi(current.substr(2));
+                        if (number > highest)
+                            highest = number;
+                    } catch (...) {}
+                }
+            }
+        }
+
+        int number = highest + 1;
+        ostringstream result;
+        result << "AP" << setw(3) << setfill('0') << number;
+        return result.str();
+    }
+
+    bool addPatient(Patient patient) {
+        if (patientCount >= 10 || idExists(patient.getID()) || !isValidName(patient.getName()))
+            return false;
+
+        patients[patientCount] = patient;
+        patientCount++;
+
+        if (!savePatients()) {
+            patientCount--;
+            return false;
+        }
+        return true;
+    }
+
+    bool updatePatient(string id, string name, string ailment,
+                       int age, int choice) {
+        int index = findIndex(id);
+        if (index == -1 || patients[index].getName() != name)
+            return false;
+
+        Patient backup = patients[index];
+
+        if (choice == 1) {
+            if (!patients[index].setAilment(ailment))
+                return false;
+        } else if (choice == 2) {
+            if (!patients[index].setAge(age))
+                return false;
+        } else {
+            return false;
+        }
+
+        if (!savePatients()) {
+            patients[index] = backup;
+            return false;
+        }
+        return true;
+    }
+
+    bool deletePatient(string id) {
+        int index = findIndex(id);
+        if (index == -1)
+            return false;
+
+        Patient backup[10];
+        int oldCount = patientCount;
+        for (int i = 0; i < oldCount; i++)
+            backup[i] = patients[i];
+
+        for (int i = index; i < patientCount - 1; i++)
+            patients[i] = patients[i + 1];
+        patientCount--;
+
+        if (!savePatients() || !saveAppointments()) {
+            patientCount = oldCount;
+            for (int i = 0; i < oldCount; i++)
+                patients[i] = backup[i];
+            return false;
+        }
+        return true;
+    }
+
+    bool isDoctorAvailable(string doctorID, string date, string time) const {
+        for (int i = 0; i < patientCount; i++) {
+            for (int j = 0; j < patients[i].getAppointmentCount(); j++) {
+                Appointment a = patients[i].getAppointment(j);
+                if (a.getDoctorID() == doctorID &&
+                    a.getDate() == date &&
+                    a.getTime() == time &&
+                    a.getStatus() != "Cancelled" &&
+                    a.getStatus() != "Rejected")
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    bool scheduleAppointment(string patientID, Appointment appointment) {
+        int index = findIndex(patientID);
+        if (index == -1 || patients[index].getAppointmentCount() >= 3)
+            return false;
+
+        if (!isDoctorAvailable(appointment.getDoctorID(),
+                               appointment.getDate(), appointment.getTime()))
+            return false;
+
+        if (!patients[index].requestAppointment(appointment))
+            return false;
+
+        if (!saveAppointments()) {
+            patients[index].removeAppointment(appointment.getAppointmentID());
+            return false;
+        }
+        return true;
+    }
+
+    bool cancelAppointment(string appointmentID, string patientID) {
+        int index = findIndex(patientID);
+        if (index == -1)
+            return false;
+
+        for (int i = 0; i < patients[index].getAppointmentCount(); i++) {
+            Appointment a = patients[index].getAppointment(i);
+            if (a.getAppointmentID() == appointmentID &&
+                a.getStatus() != "Cancelled") {
+                patients[index].updateAppointmentStatus(appointmentID, "Cancelled");
+                if (!saveAppointments()) {
+                    patients[index].updateAppointmentStatus(appointmentID, a.getStatus());
+                    return false;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool updateAppointmentStatus(string appointmentID, string doctorID,
+                                 string newStatus) {
+        for (int i = 0; i < patientCount; i++) {
+            for (int j = 0; j < patients[i].getAppointmentCount(); j++) {
+                Appointment a = patients[i].getAppointment(j);
+                if (a.getAppointmentID() == appointmentID &&
+                    a.getDoctorID() == doctorID &&
+                    a.getStatus() == "Pending" &&
+                    (newStatus == "Confirmed" || newStatus == "Rejected")) {
+                    patients[i].updateAppointmentStatus(appointmentID, newStatus);
+                    if (!saveAppointments()) {
+                        patients[i].updateAppointmentStatus(appointmentID, "Pending");
+                        return false;
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    void displayPatientAppointments(string patientID) const {
+        int index = findIndex(patientID);
+        if (index == -1 || patients[index].getAppointmentCount() == 0) {
+            cout << "\nNo appointments found!\n";
+            return;
+        }
+
+        for (int i = 0; i < patients[index].getAppointmentCount(); i++) {
+            Appointment a = patients[index].getAppointment(i);
+            a.display(getDoctorName(a.getDoctorID()));
+        }
+    }
+
+    void displayDoctorAppointments(string doctorID, string doctorName) const {
+        bool found = false;
+        cout << "\n========= MY APPOINTMENTS =========\n";
+
+        for (int i = 0; i < patientCount; i++) {
+            for (int j = 0; j < patients[i].getAppointmentCount(); j++) {
+                Appointment a = patients[i].getAppointment(j);
+                if (a.getDoctorID() == doctorID) {
+                    cout << "Patient Name   : " << patients[i].getName() << '\n';
+                    cout << "Patient ID     : " << patients[i].getID() << '\n';
+                    a.display(doctorName);
+                    found = true;
+                }
+            }
+        }
+
+        if (!found)
+            cout << "\nNo appointments assigned to you.\n";
+    }
+
+    void displayAll() const {
+        if (patientCount == 0) {
+            cout << "\nNo patient records found!\n";
+            return;
+        }
+
+        for (int i = 0; i < patientCount; i++)
+            patients[i].displayInfo();
+
+        cout << "\nTotal Patients: " << patientCount << '\n';
+    }
+
+    void displayPatient(string id) const {
+        int index = findIndex(id);
+        if (index == -1) {
+            cout << "\nPatient not found!\n";
+            return;
+        }
+        patients[index].displayInfo();
+    }
+};
+
+bool readDoctorRecord(ifstream &file, string &id, string &name,
+                      string &specialty, int &room,
+                      string &username, string &password) {
+    return static_cast<bool>(file >> quoted(id) >> quoted(name)
+                                 >> quoted(specialty) >> room
+                                 >> quoted(username) >> quoted(password));
+}
+
+bool doctorExists(string searchID) {
+    ifstream file(DOCTOR_FILE);
+    if (!file.is_open())
+        return false;
+
+    string id, name, specialty, username, password;
+    int room;
+
+    while (readDoctorRecord(file, id, name, specialty, room, username, password)) {
+        if (id == searchID)
+            return true;
+    }
+    return false;
+}
+
+string getDoctorName(string searchID) {
+    ifstream file(DOCTOR_FILE);
+    if (!file.is_open())
+        return "Unknown Doctor";
+
+    string id, name, specialty, username, password;
+    int room;
+
+    while (readDoctorRecord(file, id, name, specialty, room, username, password)) {
+        if (id == searchID)
+            return name;
+    }
+    return "Unknown Doctor";
+}
+
+bool displayDoctors(string date, string time, ClinicRecords &clinic) {
+    ifstream file(DOCTOR_FILE);
+    if (!file.is_open()) {
+        cout << "\nError: Cannot open doctors.txt!\n";
+        return false;
+    }
+
+    string id, name, specialty, username, password;
+    int room;
+    bool found = false;
+
+    cout << "\n============== AVAILABLE DOCTORS ==============\n";
+
+    while (readDoctorRecord(file, id, name, specialty, room, username, password)) {
+        if (clinic.isDoctorAvailable(id, date, time)) {
+            cout << "\nDoctor ID   : " << id << '\n';
+            cout << "Doctor Name : " << name << '\n';
+            cout << "Specialty   : " << specialty << '\n';
+            cout << "Room Number : " << room << '\n';
+            found = true;
+        }
+    }
+
+    if (!found)
+        cout << "\nNo doctors are available at this date and time.\n";
+
+    cout << "================================================\n";
+    return found;
+}
+
+void bookAppointment(Patient &patient, ClinicRecords &clinic) {
+    string doctorID, date, time, confirmation;
+
+    cout << "\n========================================\n";
+    cout << "       XIAMEN MEDICAL CENTER\n";
+    cout << "          BOOK APPOINTMENT\n";
+    cout << "========================================\n";
+
+    cout << "\nEnter Appointment Date (YYYY-MM-DD): ";
+    getline(cin, date);
+    if (date.empty()) {
+        cout << "\nAppointment date cannot be empty!\n";
+        return;
+    }
+
+    cout << "Enter Appointment Time (HH:MM): ";
+    getline(cin, time);
+    if (time.empty()) {
+        cout << "\nAppointment time cannot be empty!\n";
+        return;
+    }
+
+    if (!displayDoctors(date, time, clinic)) {
+        cout << "\nPlease choose another date or time.\n";
+        return;
+    }
+
+    cout << "\nEnter Doctor ID: ";
+    getline(cin, doctorID);
+
+    if (!doctorExists(doctorID)) {
+        cout << "\nInvalid Doctor ID!\n";
+        return;
+    }
+
+    if (!clinic.isDoctorAvailable(doctorID, date, time)) {
+        cout << "\nSorry! This doctor is already booked at that time.\n";
+        return;
+    }
+
+    cout << "\n========== BOOKING SUMMARY ==========\n";
+    cout << "Patient Name : " << patient.getName() << '\n';
+    cout << "Patient ID   : " << patient.getID() << '\n';
+    cout << "Doctor Name  : " << getDoctorName(doctorID) << '\n';
+    cout << "Date         : " << date << '\n';
+    cout << "Time         : " << time << '\n';
+    cout << "=====================================\n";
+
+    cout << "\nConfirm appointment? (Y/N): ";
+    getline(cin, confirmation);
+
+    if (confirmation != "Y" && confirmation != "y") {
+        cout << "\nBooking cancelled!\n";
+        return;
+    }
+
+    string appointmentID = clinic.generateAppointmentID();
+    Appointment appointment(appointmentID, date, time, doctorID, "Pending");
+
+    if (clinic.scheduleAppointment(patient.getID(), appointment)) {
+        cout << "\n========================================\n";
+        cout << "       APPOINTMENT BOOKED!\n";
+        cout << "========================================\n";
+        cout << "Appointment ID : " << appointmentID << '\n';
+        cout << "Doctor Name    : " << getDoctorName(doctorID) << '\n';
+        cout << "Date           : " << date << '\n';
+        cout << "Time           : " << time << '\n';
+        cout << "Status         : Pending\n";
+    } else {
+        cout << "\nFailed to book appointment. Check your appointment limit or availability.\n";
+    }
+}
+
+bool adminLogin(Admin &loggedInAdmin) {
+    string username, password, savedUsername, savedPassword;
     string adminID, adminName, department;
     int accessLevel;
 
@@ -976,74 +859,47 @@ bool adminLogin(Admin &loggedInAdmin) {
 
     cout << "\nUsername: ";
     getline(cin, username);
-
     cout << "Password: ";
     getline(cin, password);
 
-    ifstream file("admin.txt");
-
+    ifstream file(ADMIN_FILE);
     if (!file.is_open()) {
         cout << "Error: Cannot open admin.txt!\n";
         return false;
     }
 
-    while (file >> quoted(savedUsername)
-                >> quoted(savedPassword)
-                >> quoted(adminID)
-                >> quoted(adminName)
-                >> quoted(department)
-                >> accessLevel) {
-
-        if (username == savedUsername &&
-            password == savedPassword) {
-
-            loggedInAdmin = Admin(
-                adminID,
-                adminName,
-                department,
-                accessLevel
-            );
-
-            file.close();
-
+    while (file >> quoted(savedUsername) >> quoted(savedPassword)
+                >> quoted(adminID) >> quoted(adminName)
+                >> quoted(department) >> accessLevel) {
+        if (username == savedUsername && password == savedPassword) {
+            loggedInAdmin = Admin(adminID, adminName, department, accessLevel);
             cout << "\nLogin successful!\n";
             return true;
         }
     }
 
-    file.close();
-
     cout << "\nInvalid username or password!\n";
     return false;
 }
 
-
-
 void adminDashboard(Admin &admin, ClinicRecords &clinic) {
-
     int choice;
     int level = admin.getAccessLevel();
 
     while (true) {
-
         cout << "\n========================================\n";
         cout << "       XIAMEN MEDICAL CENTER\n";
         cout << "            ADMIN PORTAL\n";
         cout << "========================================\n";
-
         admin.displayInfo();
 
         cout << "\n1. Display Patient Information\n";
-
         if (level >= 2) {
             cout << "2. Register New Patient\n";
             cout << "3. Update Patient Information\n";
         }
-
-        if (level >= 3) {
+        if (level >= 3)
             cout << "4. Delete Patient Records\n";
-        }
-
         cout << "0. Logout\n";
         cout << "\nEnter your choice: ";
 
@@ -1053,7 +909,6 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             continue;
         }
-
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         if (choice == 0) {
@@ -1062,80 +917,112 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
         }
 
         switch (choice) {
-
             case 1:
                 clinic.displayAll();
                 break;
 
-            case 2:
-                if (level >= 2) {
 
-                    string name, ailment;
-                    int age;
+        case 2:
+            if (level >= 2) {
+                string name, ailment, username, password;
+                int age;
 
-                    cout << "\n---------- PATIENT REGISTRATION ----------\n";
+                cout << "\n---------- PATIENT REGISTRATION ----------\n";
 
-                    do {
-                        cout << "Enter Patient Name: ";
-                        getline(cin, name);
+                do {
+                    cout << "Enter Patient Name: ";
+                    getline(cin, name);
 
-                        if (name.empty())
-                            cout << "Name cannot be empty!\n";
+                    if (!isValidName(name))
+                        cout << "Invalid name! Please enter letters and spaces only.\n";
 
-                    } while (name.empty());
+                } while (!isValidName(name));
 
-                    do {
-                        cout << "Enter Patient Ailment: ";
-                        getline(cin, ailment);
+                do {
+                    cout << "Enter Patient Ailment: ";
+                    getline(cin, ailment);
 
-                        if (ailment.empty())
-                            cout << "Ailment cannot be empty!\n";
+                    if (ailment.empty())
+                        cout << "Ailment cannot be empty!\n";
 
-                    } while (ailment.empty());
+                } while (ailment.empty());
 
-                    while (true) {
-                        cout << "Enter Patient Age: ";
+                while (true) {
+                    cout << "Enter Patient Age: ";
 
-                        if (cin >> age && age > 0 && age <= 100)
-                            break;
+                    if (cin >> age && age > 0 && age <= 100)
+                        break;
 
-                        cout << "Invalid age! Enter 1-100.\n";
-                        cin.clear();
-                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                    }
-
+                    cout << "Invalid age! Enter 1-100.\n";
+                    cin.clear();
                     cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
 
-                    string patientID = clinic.generatePatientID();
-                    Patient newPatient(patientID, name, ailment, age);
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-                    if (clinic.addPatient(newPatient)) {
-                        cout << "\nPatient registered successfully!\n";
-                        cout << "Generated Patient ID: " << patientID << endl;
-                        newPatient.displayInfo();
+                while (true) {
+                    cout << "Create Patient Username: ";
+                    getline(cin, username);
+
+                    if (username.empty()) {
+                        cout << "Username cannot be empty!\n";
+                    }
+                    else if (clinic.usernameExists(username)) {
+                        cout << "Username already exists! Try another username.\n";
                     }
                     else {
-                        cout << "\nRegistration failed!\n";
+                        break;
                     }
+                }
 
+                do {
+                    cout << "Create Patient Password: ";
+                    getline(cin, password);
+
+                    if (password.empty())
+                        cout << "Password cannot be empty!\n";
+
+                } while (password.empty());
+
+                string patientID = clinic.generatePatientID();
+
+                Patient newPatient(
+                    patientID,
+                    name,
+                    ailment,
+                    age,
+                    username,
+                    password
+                );
+
+                if (clinic.addPatient(newPatient)) {
+                    cout << "\n========================================\n";
+                    cout << "       PATIENT REGISTERED!\n";
+                    cout << "========================================\n";
+                    cout << "Patient ID : " << patientID << '\n';
+                    cout << "Name       : " << name << '\n';
+                    cout << "Username   : " << username << '\n';
+                    cout << "Password   : Account credentials created\n";
+                    cout << "\nPatient can now log in using these credentials.\n";
                 }
                 else {
-                    cout << "Access denied!\n";
+                    cout << "\nRegistration failed!\n";
                 }
-                break;
+
+            } else {
+                cout << "Access denied!\n";
+            }
+            break;
+
 
             case 3:
                 if (level >= 2) {
-
                     string patientID, patientName, ailment;
-                    int age = 0;
-                    int updateChoice;
+                    int age = 0, updateChoice;
 
                     cout << "\n---------- UPDATE PATIENT INFORMATION ----------\n";
-
                     cout << "Enter Patient ID: ";
                     getline(cin, patientID);
-
                     cout << "Enter Patient Name: ";
                     getline(cin, patientName);
 
@@ -1146,7 +1033,6 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
 
                     cout << "\nPatient verified successfully!\n";
                     clinic.displayPatient(patientID);
-
                     cout << "\n========== SELECT FIELD TO UPDATE ==========\n";
                     cout << "1. Update Patient Ailment\n";
                     cout << "2. Update Patient Age\n";
@@ -1159,39 +1045,29 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
                         cin.ignore(numeric_limits<streamsize>::max(), '\n');
                         break;
                     }
-
                     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
                     if (updateChoice == 1) {
                         do {
                             cout << "\nEnter New Patient Ailment: ";
                             getline(cin, ailment);
-
                             if (ailment.empty())
                                 cout << "Ailment cannot be empty!\n";
-
                         } while (ailment.empty());
-                    }
-                    else if (updateChoice == 2) {
-
+                    } else if (updateChoice == 2) {
                         while (true) {
                             cout << "\nEnter New Patient Age: ";
-
                             if (cin >> age && age > 0 && age <= 100)
                                 break;
-
                             cout << "Invalid age! Enter 1-100.\n";
                             cin.clear();
                             cin.ignore(numeric_limits<streamsize>::max(), '\n');
                         }
-
                         cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                    }
-                    else if (updateChoice == 0) {
+                    } else if (updateChoice == 0) {
                         cout << "\nUpdate cancelled!\n";
                         break;
-                    }
-                    else {
+                    } else {
                         cout << "\nInvalid choice!\n";
                         break;
                     }
@@ -1199,35 +1075,26 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
                     if (clinic.updatePatient(patientID, patientName, ailment, age, updateChoice)) {
                         cout << "\nPatient information updated successfully!\n";
                         clinic.displayPatient(patientID);
-                    }
-                    else {
+                    } else {
                         cout << "\nFailed to update patient information!\n";
                     }
-
-                }
-                else {
+                } else {
                     cout << "Access denied!\n";
                 }
                 break;
 
             case 4:
                 if (level >= 3) {
-
                     string patientID;
-
                     cout << "\n---------- DELETE PATIENT RECORD ----------\n";
                     cout << "Enter Patient ID: ";
                     getline(cin, patientID);
 
-                    if (clinic.deletePatient(patientID)) {
+                    if (clinic.deletePatient(patientID))
                         cout << "\nPatient record deleted successfully!\n";
-                    }
-                    else {
+                    else
                         cout << "\nPatient ID not found or deletion failed!\n";
-                    }
-
-                }
-                else {
+                } else {
                     cout << "Access denied!\n";
                 }
                 break;
@@ -1239,27 +1106,21 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
     }
 }
 
-//login (patient)
 bool patientLogin(ClinicRecords &clinic, Patient &loggedInPatient) {
-
     string username, password;
 
     cout << "\n========================================\n";
     cout << "       XIAMEN MEDICAL CENTER\n";
     cout << "           PATIENT LOGIN\n";
     cout << "========================================\n";
-
     cout << "\nUsername: ";
     getline(cin, username);
-
     cout << "Password: ";
     getline(cin, password);
 
     if (clinic.patientLogin(username, password, loggedInPatient)) {
-
         cout << "\nLogin successful!\n";
         cout << "Welcome, " << loggedInPatient.getName() << "!\n";
-
         return true;
     }
 
@@ -1267,27 +1128,21 @@ bool patientLogin(ClinicRecords &clinic, Patient &loggedInPatient) {
     return false;
 }
 
-
-void loggedInPatientDashboard(Patient &patient, ClinicRecords &clinic, AppointmentRecords &appointmentRecords) {
-
+void loggedInPatientDashboard(Patient &patient, ClinicRecords &clinic) {
     int choice;
 
     while (true) {
-
         cout << "\n========================================\n";
         cout << "       XIAMEN MEDICAL CENTER\n";
         cout << "          PATIENT DASHBOARD\n";
         cout << "========================================\n";
-
         cout << "\nWelcome, " << patient.getName() << "!\n";
-        cout << "Patient ID: " << patient.getID() << endl;
-
+        cout << "Patient ID: " << patient.getID() << '\n';
         cout << "\n1. View My Information\n";
         cout << "2. Book Appointment\n";
         cout << "3. View My Appointments\n";
         cout << "4. Cancel Appointment\n";
         cout << "0. Logout\n";
-
         cout << "\nEnter your choice: ";
 
         if (!(cin >> choice)) {
@@ -1296,58 +1151,40 @@ void loggedInPatientDashboard(Patient &patient, ClinicRecords &clinic, Appointme
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             continue;
         }
-
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
-
             case 1:
                 patient.displayInfo();
                 break;
-
-
             case 2:
-                bookAppointment(patient, appointmentRecords);
+                bookAppointment(patient, clinic);
                 break;
-
             case 3:
-                appointmentRecords.displayPatientAppointments(patient.getID());
+                clinic.displayPatientAppointments(patient.getID());
                 break;
-
             case 4: {
                 string appointmentID;
-
                 cout << "\nEnter Appointment ID to cancel: ";
                 getline(cin, appointmentID);
 
-                if (appointmentRecords.cancelAppointment(
-                        appointmentID, patient.getID())) {
-
+                if (clinic.cancelAppointment(appointmentID, patient.getID()))
                     cout << "\nAppointment cancelled successfully!\n";
-                }
-                else {
+                else
                     cout << "\nAppointment not found or cannot be cancelled!\n";
-                }
-
                 break;
             }
-
-
             case 0:
                 cout << "\nYou have successfully logged out!\n";
                 return;
-
             default:
                 cout << "\nInvalid choice! Please try again.\n";
         }
     }
 }
 
-//signup (patient)
 void patientSignUp(ClinicRecords &clinic) {
-
-    string name, ailment;
-    string username, password;
+    string name, ailment, username, password;
     int age;
 
     cout << "\n========================================\n";
@@ -1359,105 +1196,74 @@ void patientSignUp(ClinicRecords &clinic) {
         cout << "\nEnter Full Name: ";
         getline(cin, name);
 
-        if (name.empty())
-            cout << "Name cannot be empty!\n";
+        if (!isValidName(name))
+            cout << "Invalid name! Please enter letters and spaces only.\n";
 
-    } while (name.empty());
+    } while (!isValidName(name));
 
     while (true) {
         cout << "Enter Age: ";
-
         if (cin >> age && age > 0 && age <= 100)
             break;
-
         cout << "Invalid age! Enter 1-100.\n";
-
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
-
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     do {
         cout << "Enter Ailment: ";
         getline(cin, ailment);
-
         if (ailment.empty())
             cout << "Ailment cannot be empty!\n";
-
     } while (ailment.empty());
 
     while (true) {
         cout << "Create Username: ";
         getline(cin, username);
 
-        if (username.empty()) {
+        if (username.empty())
             cout << "Username cannot be empty!\n";
-        }
-        else if (clinic.usernameExists(username)) {
+        else if (clinic.usernameExists(username))
             cout << "Username already exists! Try another username.\n";
-        }
-        else {
+        else
             break;
-        }
     }
 
     do {
         cout << "Create Password: ";
         getline(cin, password);
-
         if (password.empty())
             cout << "Password cannot be empty!\n";
-
     } while (password.empty());
 
     string patientID = clinic.generatePatientID();
-
-    Patient newPatient(
-        patientID,
-        name,
-        ailment,
-        age,
-        username,
-        password
-    );
+    Patient newPatient(patientID, name, ailment, age, username, password);
 
     if (clinic.addPatient(newPatient)) {
-
         cout << "\n========================================\n";
         cout << "       REGISTRATION SUCCESSFUL!\n";
         cout << "========================================\n";
-
-        cout << "Patient ID : " << patientID << endl;
-        cout << "Name       : " << name << endl;
-        cout << "Username   : " << username << endl;
-
+        cout << "Patient ID : " << patientID << '\n';
+        cout << "Name       : " << name << '\n';
+        cout << "Username   : " << username << '\n';
         cout << "\nYou can now log in to your patient account.\n";
-
-    }
-    else {
+    } else {
         cout << "\nRegistration failed! Please try again.\n";
     }
 }
 
-
-
-
-void patientDashboard(ClinicRecords &clinic, AppointmentRecords &appointmentRecords) {
-
+void patientDashboard(ClinicRecords &clinic) {
     int choice;
 
     while (true) {
-
         cout << "\n========================================\n";
         cout << "       XIAMEN MEDICAL CENTER\n";
         cout << "           PATIENT PORTAL\n";
         cout << "========================================\n";
-
-        cout << "\n1. Patient Sign Up\n";
-        cout << "2. Patient Login\n";
+        cout << "\n1. Sign Up\n";
+        cout << "2. Login\n";
         cout << "0. Back to Main Menu\n";
-
         cout << "\nEnter your choice: ";
 
         if (!(cin >> choice)) {
@@ -1466,110 +1272,74 @@ void patientDashboard(ClinicRecords &clinic, AppointmentRecords &appointmentReco
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             continue;
         }
-
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
-
             case 1:
                 patientSignUp(clinic);
                 break;
-
             case 2: {
-
                 Patient loggedInPatient;
-
-                if (patientLogin(clinic, loggedInPatient)) {
-                    loggedInPatientDashboard(loggedInPatient, clinic, appointmentRecords);
-                }
-
+                if (patientLogin(clinic, loggedInPatient))
+                    loggedInPatientDashboard(loggedInPatient, clinic);
                 break;
             }
-
             case 0:
                 cout << "\nReturning to main menu...\n";
                 return;
-
             default:
                 cout << "\nInvalid choice! Please try again.\n";
         }
     }
 }
 
-
 bool doctorLogin(Doctor &loggedInDoctor) {
-
     string username, password;
-    string doctorID, doctorName, department;
-    string savedUsername, savedPassword;
+    string doctorID, doctorName, specialty, savedUsername, savedPassword;
+    int room;
 
     cout << "\n========================================\n";
     cout << "       XIAMEN MEDICAL CENTER\n";
     cout << "            DOCTOR LOGIN\n";
     cout << "========================================\n";
-
     cout << "\nUsername: ";
     getline(cin, username);
-
     cout << "Password: ";
     getline(cin, password);
 
-    ifstream file("doctors.txt");
-
+    ifstream file(DOCTOR_FILE);
     if (!file.is_open()) {
         cout << "Error: Cannot open doctors.txt!\n";
         return false;
     }
 
-    while (file >> quoted(doctorID)
-                >> quoted(doctorName)
-                >> quoted(department)
-                >> quoted(savedUsername)
-                >> quoted(savedPassword)) {
-
-        if (username == savedUsername &&
-            password == savedPassword) {
-
-            loggedInDoctor = Doctor(
-                doctorID,
-                doctorName,
-                department,
-                savedUsername,
-                savedPassword
-            );
-
-            file.close();
-
+    while (readDoctorRecord(file, doctorID, doctorName, specialty,
+                            room, savedUsername, savedPassword)) {
+        if (username == savedUsername && password == savedPassword) {
+            loggedInDoctor = Doctor(doctorID, doctorName, specialty, room,
+                                    savedUsername, savedPassword);
             cout << "\nLogin successful!\n";
             return true;
         }
     }
 
-    file.close();
-
     cout << "\nInvalid username or password!\n";
     return false;
 }
 
-
-void loggedInDoctorDashboard(Doctor &doctor,
-                             AppointmentRecords &appointmentRecords) {
-
+void loggedInDoctorDashboard(Doctor &doctor, ClinicRecords &clinic) {
     int choice;
 
     while (true) {
-
         cout << "\n========================================\n";
         cout << "       XIAMEN MEDICAL CENTER\n";
         cout << "          DOCTOR DASHBOARD\n";
         cout << "========================================\n";
-
         doctor.displayInfo();
 
         cout << "\n1. View My Appointments\n";
         cout << "2. Manage Appointment Requests\n";
         cout << "0. Logout\n";
-
         cout << "\nEnter your choice: ";
 
         if (!(cin >> choice)) {
@@ -1578,33 +1348,22 @@ void loggedInDoctorDashboard(Doctor &doctor,
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             continue;
         }
-
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
-
             case 1:
-                appointmentRecords.displayDoctorAppointments(
-                    doctor.getID(),
-                    doctor.getName()
-                );
+                clinic.displayDoctorAppointments(doctor.getID(), doctor.getName());
                 break;
 
             case 2: {
-
                 string appointmentID;
                 int action;
 
                 cout << "\n========= MANAGE APPOINTMENT =========\n";
-
-                appointmentRecords.displayDoctorAppointments(
-                    doctor.getID(),
-                    doctor.getName()
-                );
+                clinic.displayDoctorAppointments(doctor.getID(), doctor.getName());
 
                 cout << "\nEnter Appointment ID: ";
                 getline(cin, appointmentID);
-
                 cout << "\n1. Confirm Appointment\n";
                 cout << "2. Reject Appointment\n";
                 cout << "0. Back\n";
@@ -1616,7 +1375,6 @@ void loggedInDoctorDashboard(Doctor &doctor,
                     cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     break;
                 }
-
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
                 if (action == 0) {
@@ -1625,32 +1383,20 @@ void loggedInDoctorDashboard(Doctor &doctor,
                 }
 
                 string newStatus;
-
-                if (action == 1) {
+                if (action == 1)
                     newStatus = "Confirmed";
-                }
-                else if (action == 2) {
+                else if (action == 2)
                     newStatus = "Rejected";
-                }
                 else {
                     cout << "\nInvalid choice!\n";
                     break;
                 }
 
-                if (appointmentRecords.updateAppointmentStatus(
-                        appointmentID,
-                        doctor.getID(),
-                        newStatus)) {
-
-                    cout << "\nAppointment successfully "
-                         << newStatus << "!\n";
-                }
-                else {
-                    cout << "\nUnable to update appointment.\n";
-                    cout << "Please check the Appointment ID, "
-                         << "assignment and current status.\n";
-                }
-
+                if (clinic.updateAppointmentStatus(appointmentID,
+                                                   doctor.getID(), newStatus))
+                    cout << "\nAppointment successfully " << newStatus << "!\n";
+                else
+                    cout << "\nUnable to update appointment. Check the ID, assignment and status.\n";
                 break;
             }
 
@@ -1664,22 +1410,16 @@ void loggedInDoctorDashboard(Doctor &doctor,
     }
 }
 
-
-
-void doctorDashboard(AppointmentRecords &appointmentRecords) {
-
+void doctorDashboard(ClinicRecords &clinic) {
     int choice;
 
     while (true) {
-
         cout << "\n========================================\n";
         cout << "       XIAMEN MEDICAL CENTER\n";
         cout << "           DOCTOR PORTAL\n";
         cout << "========================================\n";
-
-        cout << "\n1. Doctor Login\n";
+        cout << "\n1. Login\n";
         cout << "0. Back to Main Menu\n";
-
         cout << "\nEnter your choice: ";
 
         if (!(cin >> choice)) {
@@ -1688,98 +1428,66 @@ void doctorDashboard(AppointmentRecords &appointmentRecords) {
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
             continue;
         }
-
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
-
             case 1: {
-
                 Doctor loggedInDoctor;
-
-                if (doctorLogin(loggedInDoctor)) {
-
-                    loggedInDoctorDashboard(
-                        loggedInDoctor,
-                        appointmentRecords
-                    );
-                }
-
+                if (doctorLogin(loggedInDoctor))
+                    loggedInDoctorDashboard(loggedInDoctor, clinic);
                 break;
             }
-
             case 0:
                 cout << "\nReturning to Main Menu...\n";
                 return;
-
             default:
                 cout << "\nInvalid choice! Please try again.\n";
         }
     }
 }
 
-
 int main() {
-
     ClinicRecords clinic;
-    AppointmentRecords appointmentRecords;
     int choice;
 
     do {
-
         cout << "\n========================================\n";
         cout << "       XIAMEN MEDICAL CENTER\n";
         cout << "       HOSPITAL MANAGEMENT SYSTEM\n";
         cout << "========================================\n";
-
-        cout << "\n1. Admin Dashboard\n";
-        cout << "2. Patient Dashboard\n";
-        cout << "3. Doctor Dashboard\n";
+        cout << "\n1. Admin\n";
+        cout << "2. Patient\n";
+        cout << "3. Doctor\n";
         cout << "4. Exit\n";
-
         cout << "\nSelect User Type: ";
 
         if (!(cin >> choice)) {
-
             cout << "Invalid input! Please enter a number.\n";
-
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
             continue;
         }
-
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
-
             case 1: {
-
                 Admin loggedInAdmin;
-
-                if (adminLogin(loggedInAdmin)) {
+                if (adminLogin(loggedInAdmin))
                     adminDashboard(loggedInAdmin, clinic);
-                }
-
                 break;
             }
-
             case 2:
-                patientDashboard(clinic, appointmentRecords);
+                patientDashboard(clinic);
                 break;
-
             case 3:
-                doctorDashboard(appointmentRecords);
+                doctorDashboard(clinic);
                 break;
-
             case 4:
                 cout << "\nThank you for using Xiamen Medical Center!\n";
                 break;
-
             default:
                 cout << "\nInvalid choice!\n";
         }
-
     } while (choice != 4);
 
     return 0;
