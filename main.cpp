@@ -1,4 +1,6 @@
 #include <iostream>
+#include <string>
+#include <limits>
 using namespace std;
 const string FILE_NAME = "patients.txt";
 class Person {
@@ -69,35 +71,54 @@ class Patient : public Person {
         }
 };
 
+
+//add new patients
 int main() {
+
     string name, ailment;
     int age;
-    static int patientNumber =1;
+
+    static int patientNumber = 1;
 
     cout << "========================================\n";
     cout << "       XIAMEN MEDICAL CENTER\n";
     cout << "          PATIENT REGISTRATION\n";
     cout << "========================================\n";
 
-    do{
+    do {
         cout << "\nEnter Patient Name: ";
         getline(cin, name);
 
-        if(name.empty()){
+        if (name.empty()) {
             cout << "Patient name cannot be empty. Please try again.\n";
         }
+
+    } while (name.empty());
+
+    do {
+        cout << "Enter Patient Ailment: ";
+        getline(cin, ailment);
+
+        if (ailment.empty()) {
+            cout << "Ailment cannot be empty. Please try again.\n";
+        }
+
     } while (ailment.empty());
 
-    while(true) {
-        cout << "Enter age: ";
-        if (cin >> age && age > 0 && age < 100) {
+    while (true) {
+
+        cout << "Enter Patient Age: ";
+
+        if (cin >> age && age > 0 && age <= 100) {
             break;
         }
-        cout << "Invalid age! Please enter 1 - 100\n";
+
+        cout << "Invalid age! Please enter 1 - 100.\n";
+
         cin.clear();
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
     string patientID = "P";
 
     if (patientNumber < 1000) {
@@ -107,11 +128,11 @@ int main() {
         if (patientNumber < 10)
             patientID += "0";
     }
-    patientID += to_string(patientNumber);
 
+    patientID += to_string(patientNumber);
     Patient newPatient(patientID, name, ailment, age);
-    patientNumber ++;
+    patientNumber++;
     cout << "\nPatient registered successfully!\n";
     newPatient.displayInfo();
     return 0;
-};
+}
