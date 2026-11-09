@@ -30,6 +30,26 @@ bool isValidName(const string &n) {
 
     return hasLetter;
 }
+
+bool isValidAge(const string &input) {
+    if (input.empty())
+        return false;
+
+    for (char c : input) {
+        if (!isdigit(static_cast<unsigned char>(c)))
+            return false;
+    }
+
+    if (input.size() > 3)
+        return false;
+
+    int age = stoi(input);
+
+    if (age < 1 || age > 100)
+        return false;
+
+    return true;
+}
 class Appointment {
 private:
     string appointmentID;
@@ -946,17 +966,17 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
                         cout << "Ailment cannot be empty!\n";
 
                 } while (ailment.empty());
-
+                
+                string ageInput;
                 while (true) {
                     cout << "Enter Patient Age: ";
+                    getline(cin, ageInput);
 
-                    if (cin >> age && age > 0 && age <= 100)
+                    if (!isValidAge(ageInput)) {
+                        age = stoi(ageInput);
                         break;
-
-                    cout << "Invalid age! Enter 1-100.\n";
-                    cin.clear();
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                }
+                    }
+                };
 
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
