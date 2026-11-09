@@ -992,13 +992,12 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
                     cout << "Enter Patient Age: ";
                     getline(cin, ageInput);
 
-                    if (!isValidAge(ageInput)) {
+                    if (isValidAge(ageInput)) {
                         age = stoi(ageInput);
                         break;
                     }
+                    cout << "Invalid age! Please enter a number between 1 and 100.\n";
                 };
-
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
                 while (true) {
                     cout << "Create Patient Username: ";
@@ -1094,16 +1093,22 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
                             if (ailment.empty())
                                 cout << "Ailment cannot be empty!\n";
                         } while (ailment.empty());
+
                     } else if (updateChoice == 2) {
+                        string ageInput;
+
                         while (true) {
                             cout << "\nEnter New Patient Age: ";
-                            if (cin >> age && age > 0 && age <= 100)
+                            getline(cin, ageInput);
+
+                            if (isValidAge(ageInput)) {
+                                age = stoi(ageInput);
                                 break;
-                            cout << "Invalid age! Enter 1-100.\n";
-                            cin.clear();
-                            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                            }
+
+                            cout << "Invalid age! Please enter a number between 1 and 100.\n";
                         }
-                        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
                     } else if (updateChoice == 0) {
                         cout << "\nUpdate cancelled!\n";
                         break;
@@ -1240,16 +1245,19 @@ void patientSignUp(ClinicRecords &clinic) {
             cout << "Invalid name! Please enter letters and spaces only.\n";
 
     } while (!isValidName(name));
+    string ageInput;
 
     while (true) {
         cout << "Enter Age: ";
-        if (cin >> age && age > 0 && age <= 100)
+        getline(cin, ageInput);
+
+        if (isValidAge(ageInput)) {
+            age = stoi(ageInput);
             break;
-        cout << "Invalid age! Enter 1-100.\n";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+
+        cout << "Invalid age! Please enter a number between 1 and 100.\n";
     }
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     do {
         cout << "Enter Ailment: ";
