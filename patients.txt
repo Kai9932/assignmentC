@@ -2,3 +2,4 @@
 "P002" "Mary Lim" "Cough" 30 "mary123" "456"
 "P004" "Jack" "cold" 21 "Jacky" "123456"
 "P005" "Barry Ting" "Leg broken" 23 "Barry" "12321321"
+"P006" "Peanut" "nose bleeding" 60 "Mary123" "fdjs"

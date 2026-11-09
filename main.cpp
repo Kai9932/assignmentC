@@ -50,6 +50,26 @@ bool isValidAge(const string &input) {
 
     return true;
 }
+
+bool isValidUsername(const string &username) {
+    if (username.empty())
+        return false;
+
+    bool hasLetter = false;
+    bool hasNumber = false;
+
+    for (char c : username) {
+        if (isalpha(static_cast<unsigned char>(c)))
+            hasLetter = true;
+        else if (isdigit(static_cast<unsigned char>(c)))
+            hasNumber = true;
+        else
+            return false;
+    }
+
+    return hasLetter && hasNumber;
+}
+
 class Appointment {
 private:
     string appointmentID;
@@ -984,8 +1004,8 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
                     cout << "Create Patient Username: ";
                     getline(cin, username);
 
-                    if (username.empty()) {
-                        cout << "Username cannot be empty!\n";
+                    if (!isValidUsername(username)) {
+                        cout << "Invalid format! Please use letters and numbers!\n";
                     }
                     else if (clinic.usernameExists(username)) {
                         cout << "Username already exists! Try another username.\n";
@@ -1242,8 +1262,8 @@ void patientSignUp(ClinicRecords &clinic) {
         cout << "Create Username: ";
         getline(cin, username);
 
-        if (username.empty())
-            cout << "Username cannot be empty!\n";
+        if (!isValidUsername(username))
+            cout << "Invalid format! Please use letters and numbers\n";
         else if (clinic.usernameExists(username))
             cout << "Username already exists! Try another username.\n";
         else
