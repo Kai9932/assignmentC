@@ -9,12 +9,14 @@ You can access the online Hospital Management System here:
 [Open Hospital Appointment System](https://hospitalappointmentsystem.replit.app/)
 
 **DOCTORS LOGIN :** 
+<br>"doctorID" "doctorName" "specialty" roomNumber "username" "password"
 <br>"D001" "Dr. John Tan" "Cardiology" 101 "john01" "doctor123" <br>
 "D002" "Dr. Sarah Lim" "Neurology" 102 "sarah02" "doctor1234" <br>
 "D003" "Dr. David Lee" "General Medicine" 103 "david03" "doctor1235" <br>
 "D004" "Dr. Emily Wong" "Paediatrics" 104 "emily04" "doctor1236" <br>
 
 **Admin Login**
+<br>"username" "password" "adminID" "adminName" "department" accessLevel
 <br>"admin001" "Admin@1" "A001" "John Tan" "Administration" 1
 <br>"admin002" "Admin@2" "A002" "Mary Lim" "Administration" 2
 <br>"admin003" "Admin@3" "A003" "David Lee" "Administration" 3
@@ -64,57 +66,7 @@ project folder as the current working directory.
 -   `patients.txt` and `appointments.txt` can initially be absent; they
     are created when the program successfully saves records.
 
-## 4. Text-file formats
-
-Each record must be on a separate line. Text values must be enclosed in
-double quotation marks.
-
-### admin.txt
-
-``` text
-"username" "password" "adminID" "adminName" "department" accessLevel
-```
-
-Example format only:
-
-``` text
-"adminUsername" "adminPassword" "A001" "System Admin" "Administration" 3
-```
-
-### doctors.txt
-
-``` text
-"doctorID" "doctorName" "specialty" roomNumber "username" "password"
-```
-
-Example format only:
-
-``` text
-"D001" "Dr. Example" "Cardiology" 101 "doctorUsername" "doctorPassword"
-```
-
-Use the actual accounts configured for your project. The example
-credentials above are placeholders, not working accounts.
-
-### patients.txt
-
-``` text
-"patientID" "patientName" "ailment" age "username" "password"
-```
-
-This file can initially be empty. Patient records are saved after
-successful registration.
-
-### appointments.txt
-
-``` text
-"appointmentID" "patientID" "doctorID" "date" "time" "status"
-```
-
-This file can initially be empty. Appointment records are saved after
-successful booking and status updates.
-
-## 5. Method 1 -- Compile and run using the VS Code terminal (recommended)
+## 4. Method 1 -- Compile and run using the VS Code terminal (recommended)
 
 1.  Open the project folder in Visual Studio Code.
 2.  Select **Terminal → New Terminal**.
@@ -155,7 +107,7 @@ Select User Type:
 Make sure the terminal is currently in the project folder before
 compiling and running.
 
-## 6. Method 2 -- Compile and run using Windows Command Prompt
+## 5. Method 2 -- Compile and run using Windows Command Prompt
 
 Use this method if the VS Code right-click **Run** option does not work.
 
@@ -177,7 +129,7 @@ main.exe
 This method starts the program from the project folder, allowing it to
 find the text files.
 
-## 7. Method 3 -- Run an already compiled executable
+## 6. Method 3 -- Run an already compiled executable
 
 If `main.exe` has already been compiled:
 
