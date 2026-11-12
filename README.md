@@ -1,8 +1,6 @@
 # assignmentC
 
-# Xiamen Medical Center -- Hospital Management System
-
-A console-based C++ Hospital Management System.
+# Hospital Appointment System - XIAMEN MEDICAL CENTER
 
 ## Live Demo
 
