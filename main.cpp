@@ -103,12 +103,48 @@ public:
     string getStatus() const { return status; }
 
     bool setDetails(string date, string time, string doctorID) {
-        if (date.empty() || time.empty() || doctorID.empty())
+
+        // Validate date format: YYYY-MM-DD
+        if (date.length() != 10 ||
+            date[4] != '-' ||
+            date[7] != '-')
+            return false;
+
+        for (int i = 0; i < 10; i++) {
+            if (i == 4 || i == 7)
+                continue;
+
+            if (!isdigit(static_cast<unsigned char>(date[i])))
+                return false;
+        }
+
+        // Validate time format: HH:MM
+        if (time.length() != 5 || time[2] != ':')
+            return false;
+
+        for (int i = 0; i < 5; i++) {
+            if (i == 2)
+                continue;
+
+            if (!isdigit(static_cast<unsigned char>(time[i])))
+                return false;
+        }
+
+        // Validate hour and minute ranges
+        int hour = stoi(time.substr(0, 2));
+        int minute = stoi(time.substr(3, 2));
+
+        if (hour < 0 || hour > 23 ||
+            minute < 0 || minute > 59)
+            return false;
+
+        if (doctorID.empty())
             return false;
 
         this->date = date;
         this->time = time;
         this->doctorID = doctorID;
+
         return true;
     }
 
@@ -136,11 +172,11 @@ public:
 };
 
 class Person {
-protected:
+private:
     string id;
     string name;
 
-
+protected:
     bool isValidName(string n) const {
         if (n.empty())
             return false;
@@ -166,12 +202,20 @@ public:
     }
 
     bool setID(string id) {
-        if (id.empty())
+        if (id.length() != 4)
             return false;
+
+        if (!isupper(static_cast<unsigned char>(id[0])))
+            return false;
+
+        for (int i = 1; i < 4; i++) {
+            if (!isdigit(static_cast<unsigned char>(id[i])))
+                return false;
+        }
+
         this->id = id;
         return true;
     }
-
     string getID() const {
         return id;
     }
@@ -187,10 +231,7 @@ public:
         return name;
     }
 
-    virtual void displayInfo() const {
-        cout << "ID             : " << id << '\n';
-        cout << "Name           : " << name << '\n';
-    }
+    virtual void displayInfo() const = 0;
 
     virtual ~Person() {}
 };
@@ -309,7 +350,8 @@ public:
 
     void displayInfo() const override {
         cout << "\n========= PATIENT INFORMATION =========\n";
-        Person::displayInfo();
+        cout << "Patient ID     : " << getID() << '\n';
+        cout << "Patient Name   : " << getName() << '\n';
         cout << "Patient Ailment: " << ailment << '\n';
         cout << "Patient Age    : " << age << '\n';
         cout << "=======================================\n";
@@ -350,8 +392,8 @@ public:
 
     void displayInfo() const override {
         cout << "\n========= DOCTOR INFORMATION =========\n";
-        cout << "Doctor ID    : " << id << '\n';
-        cout << "Doctor Name  : " << name << '\n';
+        cout << "Doctor ID    : " << getID() << '\n';
+        cout << "Doctor Name  : " << getName() << '\n';
         cout << "Specialty    : " << specialty << '\n';
         cout << "Room Number  : " << roomNumber << '\n';
         cout << "======================================\n";
@@ -379,8 +421,8 @@ public:
 
     void displayInfo() const override {
         cout << "\n========= ADMIN INFORMATION =========\n";
-        cout << "Admin ID       : " << id << '\n';
-        cout << "Admin Name     : " << name << '\n';
+        cout << "Admin ID       : " << getID() << '\n';
+        cout << "Admin Name     : " << getName() << '\n';
         cout << "Department     : " << department << '\n';
         cout << "Access Level   : " << accessLevel << '\n';
         cout << "=====================================\n";
@@ -555,7 +597,20 @@ public:
     }
 
     bool addPatient(Patient patient) {
-        if (patientCount >= 10 || idExists(patient.getID()) || !isValidName(patient.getName()))
+
+        string id = patient.getID();
+
+        if (id.length() != 4 || id[0] != 'P')
+            return false;
+
+        for (int i = 1; i < 4; i++) {
+            if (!isdigit(static_cast<unsigned char>(id[i])))
+                return false;
+        }
+
+        if (patientCount >= 10 ||
+            idExists(id) ||
+            !isValidName(patient.getName()))
             return false;
 
         patients[patientCount] = patient;
@@ -565,6 +620,7 @@ public:
             patientCount--;
             return false;
         }
+
         return true;
     }
 
@@ -831,11 +887,7 @@ void bookAppointment(Patient &patient, ClinicRecords &clinic) {
 
     cout << "Enter Appointment Time (HH:MM): ";
     getline(cin, time);
-    if (time.empty()) {
-        cout << "\nAppointment time cannot be empty!\n";
-        return;
-    }
-
+    
     if (!displayDoctors(date, time, clinic)) {
         cout << "\nPlease choose another date or time.\n";
         return;
@@ -846,6 +898,13 @@ void bookAppointment(Patient &patient, ClinicRecords &clinic) {
 
     if (!doctorExists(doctorID)) {
         cout << "\nInvalid Doctor ID!\n";
+        return;
+    }
+
+    Appointment validation;
+
+    if (!validation.setDetails(date, time, doctorID)) {
+        cout << "\nDate must look like 2026-11-20 and time like 10:00.\n";
         return;
     }
 
@@ -1025,15 +1084,33 @@ void adminDashboard(Admin &admin, ClinicRecords &clinic) {
 
                 string patientID = clinic.generatePatientID();
 
-                Patient newPatient(
-                    patientID,
-                    name,
-                    ailment,
-                    age,
-                    username,
-                    password
-                );
+                Patient newPatient;
 
+                while (!newPatient.setID(patientID)) {
+                    patientID = clinic.generatePatientID();
+                }
+
+                while (!newPatient.setName(name)) {
+                    cout << "Invalid name! Please enter letters and spaces only.\n";
+                    cout << "Enter Patient Name: ";
+                    getline(cin, name);
+                }
+
+                while (!newPatient.setAilment(ailment)) {
+                    cout << "Ailment cannot be empty!\n";
+                    cout << "Enter Patient Ailment: ";
+                    getline(cin, ailment);
+                }
+
+                while (!newPatient.setAge(age)) {
+                    cout << "Invalid age! Please enter a number between 1 and 100.\n";
+                    cout << "Enter Patient Age: ";
+                    cin >> age;
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                }
+
+                newPatient.setUsername(username);
+                newPatient.setPassword(password);
                 if (clinic.addPatient(newPatient)) {
                     cout << "\n========================================\n";
                     cout << "       PATIENT REGISTERED!\n";
