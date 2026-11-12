@@ -4,7 +4,7 @@
 
 ## Live Demo
 
-You can access the online Hospital Management System here:
+You can access the online Hospital Management System here (for first time user to wait for a while):
 
 [Open Hospital Appointment System](https://hospitalappointmentsystem.replit.app/)
 
