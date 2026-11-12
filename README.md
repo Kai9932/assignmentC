@@ -4,6 +4,12 @@
 
 A console-based C++ Hospital Management System.
 
+## Live Demo
+
+You can access the online Hospital Management System here:
+
+[Open Hospital Appointment System](https://hospitalappointmentsystem.replit.app/)
+
 ## 1. Features
 
 -   **Admin:** View patient records, register patients, update patient
@@ -210,17 +216,3 @@ g++ main.cpp -o main.exe -std=c++17
 
 Read the compiler error and check the indicated line in `main.cpp`.
 
-## 9. Important notes
-
--   Keep all required text files in the project folder when running the
-    program.
--   Do not move only `main.exe` to another folder unless you also
-    provide the required data files and use the correct working
-    directory.
--   Back up the `.txt` files before manually editing or deleting
-    records.
--   When sharing the project, include `main.cpp`, `admin.txt`,
-    `doctors.txt`, and any existing patient and appointment data files.
--   Another computer needs a compatible C++ compiler to compile
-    `main.cpp`. If you provide only the executable, include the required
-    data files as well.
