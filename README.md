@@ -9,10 +9,10 @@ You can access the online Hospital Management System here:
 [Open Hospital Appointment System](https://hospitalappointmentsystem.replit.app/)
 
 **DOCTORS LOGIN :** 
-"D001" "Dr. John Tan" "Cardiology" 101 "john01" "doctor123"
-"D002" "Dr. Sarah Lim" "Neurology" 102 "sarah02" "doctor1234"
-"D003" "Dr. David Lee" "General Medicine" 103 "david03" "doctor1235"
-"D004" "Dr. Emily Wong" "Paediatrics" 104 "emily04" "doctor1236"
+"D001" "Dr. John Tan" "Cardiology" 101 "john01" "doctor123" <br>
+"D002" "Dr. Sarah Lim" "Neurology" 102 "sarah02" "doctor1234" <br>
+"D003" "Dr. David Lee" "General Medicine" 103 "david03" "doctor1235" <br>
+"D004" "Dr. Emily Wong" "Paediatrics" 104 "emily04" "doctor1236" <br>
 
 **Admin Login**
 "admin001" "Admin@1" "A001" "John Tan" "Administration" 1
